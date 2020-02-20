@@ -4,12 +4,12 @@ use std::io::Read;
 pub struct CPU {
     pub memory: [u8; 4096],
     pub v: [u8; 16],
-    pub pc: u16;
+    pub pc: usize,
     pub i: u16,
     pub delay_timer: u8,
     pub sound_timer: u8,
     pub graphics: [[u8; 64]; 32],
-    pub stack: [u16; 16];
+    pub stack: [u16; 16],
     pub sp: u16,
     pub keypad: [u8; 16],
 }
@@ -54,13 +54,30 @@ impl CPU {
         }
     }
 
-    pub fn load(&mut self, location: &str) {
-        let mut game = File::open(location).expect("Game was not found");
-        let mut buffer = [0; 3584];
-        let buffer_size = game.read(&mut buffer[..]).expect("Error when reading file");
-        
-        for i in 0..buffer_size {
-            self.memory[0x200 + i] = buffer[i];
+    pub fn load(&mut self, rom_data: &[u8]) {
+        for (i, &byte) in rom_data.iter().enumerate() {
+            self.memory[0x200 + i] = byte;
+        }
+    }
+
+    pub fn emulate_cycle(&mut self) {
+        let opcode: u16 = (self.memory[self.pc] as u16) << 8 | (self.memory[self.pc + 1] as u16);
+        let nibbles = (
+            (opcode & 0xF000) >> 12,
+            (opcode & 0x0F00) >> 8, 
+            (opcode & 0x00F0) >> 4,
+            (opcode & 0x000F)
+        );
+
+        let x = ((opcode & 0x0F00) >> 8) as usize;
+        let y = ((opcode & 0x00F0) >> 4) as usize;
+        let n = (opcode & 0x000F) as usize;
+        let nnn = ((opcode & 0x0FFF) as usize);
+        let kk = ((opcode & 0x00FF) as u8);
+
+        //TODO
+        match nibbles {
+            _ => ()
         }
     }
 }
