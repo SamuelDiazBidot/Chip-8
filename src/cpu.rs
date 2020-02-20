@@ -1,6 +1,3 @@
-use std::fs::File;
-use std::io::Read;
-
 pub struct CPU {
     pub memory: [u8; 4096],
     pub v: [u8; 16],
@@ -10,7 +7,7 @@ pub struct CPU {
     pub sound_timer: u8,
     pub graphics: [[u8; 64]; 32],
     pub stack: [u16; 16],
-    pub sp: u16,
+    pub sp: usize,
     pub keypad: [u8; 16],
 }
 
@@ -77,6 +74,107 @@ impl CPU {
 
         //TODO
         match nibbles {
+            //CLS (Clear the display)
+            (0,0,0xE,0) => {
+                self.graphics = [[0; 64]; 32];
+                self.pc += 2;
+            },
+            //RET (Return from a subroutine)
+            (0,0,0xE,0xE) => {
+                self.pc = self.stack[self.sp] as usize;
+                self.sp -= 1;
+            },
+            //JP addr (Jump to location nnn)
+            (1,_,_,_) => {
+                self.pc = nnn;
+            },
+            //CALL addr (Call to subroutine nnn)
+            (2,_,_,_) => {
+                self.sp += 1;
+                self.stack[self.sp] = (self.pc + 2) as u16;
+                self.pc = nnn;
+            },
+            //SE Vx, byte (Skip next instruction if Vx = kk)
+            (3,_,_,_) => {
+                if self.v[x] == kk {
+                    self.pc += 4;
+                } else {
+                    self.pc += 2;
+                }
+            },
+            //SNE Vx, byte (Skip next instruction if Vx != kk)
+            (4,_,_,_) => {
+                if self.v[x] != kk {
+                    self.pc += 4;
+                } else {
+                    self.pc += 2;
+                }
+            },
+            //SE Vx, Vy (Skip next instruction if Vx = Vy)
+            (5,_,_,0) => {
+                if self.v[x] == self.v[y] {
+                    self.pc += 4;
+                } else {
+                    self.pc += 2;
+                }
+            },
+            //LD Vx, byte (Set Vx = kk)
+            (6,_,_,_) => {
+                self.v[x] = kk;
+                self.pc += 2;
+            },
+            //ADD Vx, byte (Set Vx = Vx + kk)
+            (7,_,_,_) => {},
+            //LD Vx, Vy (Set Vx = Vy)
+            (8,_,_,0) => {},
+            //OR Vx, Vy (Set Vx = Vx OR Vy)
+            (8,_,_,1) => {},
+            //AND Vx, Vy (Set Vx = Vx AND Vy)
+            (8,_,_,2) => {},
+            //XOR Vx, Vy (Set Vx = Vx XOR Vy)
+            (8,_,_,3) => {},
+            //ADD Vx, Vy (Set Vx = Vx + Vy, set VF = carry)
+            (8,_,_,4) => {},
+            //SUB Vx, Vy (Set Vx = Vx - Vy, set VF = NOT borrow)
+            (8,_,_,5) => {},
+            //SHR Vx {, Vy} (Set Vx = Vx SHR 1)
+            (8,_,_,6) => {},
+            //SUBN Vx, Vy (Set Vx = Vy - Vx, set VF = NOT borrow)
+            (8,_,_,7) => {},
+            //SHL Vx {, Vy} (Set Vx = Vx SHL 1)
+            (8,_,_,0xE) => {},
+            //SNE Vx, Vy (Skip next instruction if Vx != Vy)
+            (9,_,_,0) => {},
+            //LD I, addr (Set I = nnn)
+            (0xA,_,_,_) => {},
+            //JP V0, addr (Jump to location nnn + V0)
+            (0xB,_,_,_) => {},
+            //RND Vx, byte (Set Vx = random byte AND kk.)
+            (0xC,_,_,_) => {},
+            //DRW Vx, Vy, n (Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision)
+            (0xD,_,_,_) => {},
+            //SKP Vx (Skip next instruction if key with the value of Vx is pressed.)
+            (0xE,_,9,0xE) => {},
+            //SKNP Vx (Skip next instruction if key with the value of Vx is not pressed)
+            (0xE,_,0xA,1) => {},
+            //LD Vx, delay_timer (Set Vx = delay timer value)
+            (0xF,_,0,7) => {},
+            //LD Vx, key_press (Wait for a key press, store the value of the key in Vx)
+            (0xF,_,0,0xA) => {},
+            //LD delay_timer, Vx (Set delay timer = Vx)
+            (0xF,_,1,5) => {},
+            //LD sound_timer, Vx (ST is set equal to the value of Vx)
+            (0xF,_,1,8) => {},
+            //Add I, Vx (Set I = I + Vx)
+            (0xF,_,1,0xE) => {},
+            //LD F, Vx (Set I = location of sprite for digit Vx)
+            (0xF,_,2,9) => {},
+            //LD B, Vx (Store BCD representation of Vx in memory locations I, I+1, and I+2)
+            (0xF,_,3,3) => {},
+            //LD [I], Vx (Store registers V0 through Vx in memory starting at location I)
+            (0xF,_,5,5) => {},
+            //LD Vx, [I] (Read registers V0 through Vx from memory starting at location I)
+            (0xF,_,6,5) => {},
             _ => ()
         }
     }
