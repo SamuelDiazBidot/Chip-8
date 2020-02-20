@@ -37,7 +37,7 @@ impl CPU {
         ];
 
         for i in 0..font_set.len() {
-            memory[i] = FONT_SET[i];
+            memory[i] = font_set[i];
         }
 
         CPU {
