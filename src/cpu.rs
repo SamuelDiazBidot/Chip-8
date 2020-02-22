@@ -1,8 +1,10 @@
+use rand;
+
 pub struct CPU {
     pub memory: [u8; 4096],
     pub v: [u8; 16],
     pub pc: usize,
-    pub i: u16,
+    pub i: usize,
     pub delay_timer: u8,
     pub sound_timer: u8,
     pub graphics: [[u8; 64]; 32],
@@ -69,8 +71,8 @@ impl CPU {
         let x = ((opcode & 0x0F00) >> 8) as usize;
         let y = ((opcode & 0x00F0) >> 4) as usize;
         let n = (opcode & 0x000F) as usize;
-        let nnn = ((opcode & 0x0FFF) as usize);
-        let kk = ((opcode & 0x00FF) as u8);
+        let nnn = (opcode & 0x0FFF) as usize;
+        let kk = (opcode & 0x00FF) as u8;
 
         //TODO
         match nibbles {
@@ -165,24 +167,53 @@ impl CPU {
                 let vx = self.v[x] as i16;
                 let vy = self.v[x] as i16;
                 let result = vx - vy; 
-                self.v[0x0F] = if self.v[x] > self.v[y] {0} else {1};
+                self.v[0x0F] = if self.v[x] > self.v[y] {1} else {0};
                 self.v[x] = result as u8;
                 self.pc += 2;
             },
             //SHR Vx {, Vy} (Set Vx = Vx SHR 1)
-            (8,_,_,6) => {},
+            (8,_,_,6) => {
+                self.v[0x0F] = self.v[x] & 0b00000001;
+                self.v[x] >>= 1;
+                self.pc += 2;
+            },
             //SUBN Vx, Vy (Set Vx = Vy - Vx, set VF = NOT borrow)
-            (8,_,_,7) => {},
+            (8,_,_,7) => {
+                let vx = self.v[x] as i16;
+                let vy = self.v[x] as i16;
+                let result = vx - vy; 
+                self.v[0x0F] = if self.v[y] > self.v[x] {1} else {0};
+                self.v[x] = result as u8;
+                self.pc += 2;
+            },
             //SHL Vx {, Vy} (Set Vx = Vx SHL 1)
-            (8,_,_,0xE) => {},
+            (8,_,_,0xE) => {
+                self.v[0x0F] = (self.v[x] & 0b10000000) >> 7;
+                self.v[x] <<= 1;
+                self.pc += 2;
+            },
             //SNE Vx, Vy (Skip next instruction if Vx != Vy)
-            (9,_,_,0) => {},
+            (9,_,_,0) => {
+                if self.v[x] != self.v[y] {
+                    self.pc += 4;
+                } else {
+                    self.pc += 2;
+                }
+            },
             //LD I, addr (Set I = nnn)
-            (0xA,_,_,_) => {},
+            (0xA,_,_,_) => {
+                self.i = nnn;
+                self.pc += 2;
+            },
             //JP V0, addr (Jump to location nnn + V0)
-            (0xB,_,_,_) => {},
+            (0xB,_,_,_) => {
+                self.pc = nnn + (self.v[0x00] as usize);
+            },
             //RND Vx, byte (Set Vx = random byte AND kk.)
-            (0xC,_,_,_) => {},
+            (0xC,_,_,_) => {
+                self.v[x] = rand::random::<u8>() & kk;
+                self.pc += 2;
+            },
             //DRW Vx, Vy, n (Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision)
             (0xD,_,_,_) => {},
             //SKP Vx (Skip next instruction if key with the value of Vx is pressed.)
@@ -190,7 +221,10 @@ impl CPU {
             //SKNP Vx (Skip next instruction if key with the value of Vx is not pressed)
             (0xE,_,0xA,1) => {},
             //LD Vx, delay_timer (Set Vx = delay timer value)
-            (0xF,_,0,7) => {},
+            (0xF,_,0,7) => {
+                self.v[x] = self.delay_timer;
+                self.pc += 2;
+            },
             //LD Vx, key_press (Wait for a key press, store the value of the key in Vx)
             (0xF,_,0,0xA) => {},
             //LD delay_timer, Vx (Set delay timer = Vx)
@@ -198,9 +232,15 @@ impl CPU {
             //LD sound_timer, Vx (ST is set equal to the value of Vx)
             (0xF,_,1,8) => {},
             //Add I, Vx (Set I = I + Vx)
-            (0xF,_,1,0xE) => {},
-            //LD F, Vx (Set I = location of sprite for digit Vx)
-            (0xF,_,2,9) => {},
+            (0xF,_,1,0xE) => {
+                self.i += self.v[x] as usize;
+                self.pc += 2;
+            },
+            //LD F, Vx (Set I = location of sprite for digit Vx) Multiply by 5 because each sprite has 5 lines
+            (0xF,_,2,9) => {
+                self.i = (self.v[x] as usize) * 5;
+                self.pc += 2;
+            },
             //LD B, Vx (Store BCD representation of Vx in memory locations I, I+1, and I+2)
             (0xF,_,3,3) => {},
             //LD [I], Vx (Store registers V0 through Vx in memory starting at location I)
