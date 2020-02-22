@@ -124,19 +124,51 @@ impl CPU {
                 self.pc += 2;
             },
             //ADD Vx, byte (Set Vx = Vx + kk)
-            (7,_,_,_) => {},
+            (7,_,_,_) => {
+                let vx = self.v[x] as u16;
+                let kk = self.v[x] as u16;
+                self.v[x] = (vx + kk) as u8;
+                self.pc += 2;
+
+            },
             //LD Vx, Vy (Set Vx = Vy)
-            (8,_,_,0) => {},
+            (8,_,_,0) => {
+                self.v[x] = self.v[y];
+                self.pc += 2;
+            },
             //OR Vx, Vy (Set Vx = Vx OR Vy)
-            (8,_,_,1) => {},
+            (8,_,_,1) => {
+                self.v[x] |= self.v[y];
+                self.pc += 2;
+            },
             //AND Vx, Vy (Set Vx = Vx AND Vy)
-            (8,_,_,2) => {},
+            (8,_,_,2) => {
+                self.v[x] &= self.v[y];
+                self.pc += 2;
+            },
             //XOR Vx, Vy (Set Vx = Vx XOR Vy)
-            (8,_,_,3) => {},
+            (8,_,_,3) => {
+                self.v[x] ^= self.v[y];
+                self.pc += 2;
+            },
             //ADD Vx, Vy (Set Vx = Vx + Vy, set VF = carry)
-            (8,_,_,4) => {},
+            (8,_,_,4) => {
+                let vx = self.v[x] as u16;
+                let vy = self.v[x] as u16;
+                let result = vx + vy;
+                self.v[0x0F] = ((result & 0x0F00) >> 8) as u8;
+                self.v[x] = result as u8;
+                self.pc += 2;
+            },
             //SUB Vx, Vy (Set Vx = Vx - Vy, set VF = NOT borrow)
-            (8,_,_,5) => {},
+            (8,_,_,5) => {
+                let vx = self.v[x] as i16;
+                let vy = self.v[x] as i16;
+                let result = vx - vy; 
+                self.v[0x0F] = if self.v[x] > self.v[y] {0} else {1};
+                self.v[x] = result as u8;
+                self.pc += 2;
+            },
             //SHR Vx {, Vy} (Set Vx = Vx SHR 1)
             (8,_,_,6) => {},
             //SUBN Vx, Vy (Set Vx = Vy - Vx, set VF = NOT borrow)
