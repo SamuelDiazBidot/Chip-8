@@ -10,7 +10,7 @@ pub struct CPU {
     pub graphics: [[u8; 64]; 32],
     pub stack: [u16; 16],
     pub sp: usize,
-    pub keypad: [u8; 16],
+    pub keypad: [bool; 16],
 }
 
 impl CPU {
@@ -49,7 +49,7 @@ impl CPU {
             graphics: [[0; 64]; 32],
             stack: [0; 16],
             sp: 0,
-            keypad: [0; 16],
+            keypad: [false; 16],
         }
     }
 
@@ -215,22 +215,61 @@ impl CPU {
                 self.pc += 2;
             },
             //DRW Vx, Vy, n (Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision)
-            (0xD,_,_,_) => {},
+            // Copied from https://github.com/starrhorne/chip8-rust
+            // I still dont understand how to implement this
+            (0xD,_,_,_) => {
+                self.v[0x0F] = 0;
+                for byte in 0..n {
+                    let y = (self.v[y] as usize + byte) % 32;
+                    for bit in 0..8 {
+                        let x = (self.v[y] as usize + bit) % 64;
+                        let color = (self.memory[self.i + byte] >> (7 - bit)) & 1;
+                        self.v[0x0F] |= color & self.graphics[y][x];
+                        self.graphics[y][x] ^= color;
+                    }
+                }
+            },
             //SKP Vx (Skip next instruction if key with the value of Vx is pressed.)
-            (0xE,_,9,0xE) => {},
+            (0xE,_,9,0xE) => {
+                let key = self.v[x] as usize;
+                if self.keypad[key] {
+                    self.pc += 4;
+                } else {
+                    self.pc += 2;
+                }
+            },
             //SKNP Vx (Skip next instruction if key with the value of Vx is not pressed)
-            (0xE,_,0xA,1) => {},
+            (0xE,_,0xA,1) => {
+                let key = self.v[x] as usize;
+                if !self.keypad[key] {
+                    self.pc += 4;
+                } else {
+                    self.pc += 2;
+                }
+            },
             //LD Vx, delay_timer (Set Vx = delay timer value)
             (0xF,_,0,7) => {
                 self.v[x] = self.delay_timer;
                 self.pc += 2;
             },
             //LD Vx, key_press (Wait for a key press, store the value of the key in Vx)
-            (0xF,_,0,0xA) => {},
+            (0xF,_,0,0xA) => {
+                //
+                // if let Some(val) = get_key_press() {
+                //      self.v[x] = val;
+                //      self.pc += 2;
+                //
+            },
             //LD delay_timer, Vx (Set delay timer = Vx)
-            (0xF,_,1,5) => {},
+            (0xF,_,1,5) => {
+                self.delay_timer = self.v[x];
+                self.pc += 2;
+            },
             //LD sound_timer, Vx (ST is set equal to the value of Vx)
-            (0xF,_,1,8) => {},
+            (0xF,_,1,8) => {
+                self.sound_timer = self.v[x];
+                self.pc += 2;
+            },
             //Add I, Vx (Set I = I + Vx)
             (0xF,_,1,0xE) => {
                 self.i += self.v[x] as usize;
@@ -242,12 +281,29 @@ impl CPU {
                 self.pc += 2;
             },
             //LD B, Vx (Store BCD representation of Vx in memory locations I, I+1, and I+2)
-            (0xF,_,3,3) => {},
+            (0xF,_,3,3) => {
+                self.memory[self.i] = self.v[x] / 100;
+                self.memory[self.i + 1] = (self.v[x] % 100) / 10;
+                self.memory[self.i + 2] = self.v[x] % 10;
+                self.pc += 2;
+            },
             //LD [I], Vx (Store registers V0 through Vx in memory starting at location I)
-            (0xF,_,5,5) => {},
+            (0xF,_,5,5) => {
+                for index in 0..(x+1) {
+                    self.memory[self.i + index] = self.v[index];
+                }
+                self.pc += 2;
+            },
             //LD Vx, [I] (Read registers V0 through Vx from memory starting at location I)
-            (0xF,_,6,5) => {},
-            _ => ()
+            (0xF,_,6,5) => {
+                for index in 0..(x+1) {
+                    self.v[index] = self.memory[self.i + index];
+                }
+                self.pc += 2;
+            },
+            _ => { 
+                self.pc += 2; 
+            },
         }
     }
 }
