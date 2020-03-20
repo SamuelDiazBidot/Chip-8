@@ -39,39 +39,56 @@ impl EventHandler for EmulationState {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         if keyboard::is_key_pressed(ctx, KeyCode::Key1) {
             //key 1 is pressed
-            self.cpu.keypad[0] = true;
+            self.cpu.keypad[1] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::Key2) {
             //Key 2 is pressed
+            self.cpu.keypad[2] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::Key3) {
             //key 3 is pressed
+            self.cpu.keypad[3] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::Key4) {
             //key C is pressed
+            self.cpu.keypad[12] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::Q) {
             //key 4 is pressed
+            self.cpu.keypad[4] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::W) {
             //key 5 is pressed
+            self.cpu.keypad[5] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::E) {
             //key 6 is pressed
+            self.cpu.keypad[6] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::R) {
             //Key D is pressed
+            self.cpu.keypad[13] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::A) {
             //key 7 is pressed
+            self.cpu.keypad[7] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::S) {
             //key 8 is pressed
+            self.cpu.keypad[8] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::D) {
             //key 9 is pressed
+            self.cpu.keypad[9] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::F) {
             //key E is pressed
+            self.cpu.keypad[14] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::Z) {
             //key A is pressed
+            self.cpu.keypad[10] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::X) {
             //key 0 is pressed
+            self.cpu.keypad[0] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::C) {
             //key B is pressed
+            self.cpu.keypad[11] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::V) {
             //key F is pressed
+            self.cpu.keypad[15] = true;
         } else if keyboard::is_key_pressed(ctx, KeyCode::Escape){
             event::quit(ctx);
+        } else {
+            self.cpu.keypad = [false; 16];
         }
         self.cpu.emulate_cycle();
         Ok(())
