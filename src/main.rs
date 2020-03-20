@@ -4,7 +4,8 @@ use cpu::CPU;
 use std::fs::File;
 use std::io::Read;
 use ggez::{graphics, Context, ContextBuilder, GameResult};
-use ggez::event::{self, EventHandler};
+use ggez::event::{self, EventHandler, KeyCode};
+use ggez::input::keyboard;
 
 const GRID_SIZE: (u16, u16) = (64,32);
 const GRID_CELL_SIZE: u16 = 20;
@@ -35,8 +36,44 @@ impl EmulationState {
 }
 
 impl EventHandler for EmulationState {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
-        // self.cpu.emulate_cycle();
+    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
+        if keyboard::is_key_pressed(ctx, KeyCode::Key1) {
+            //key 1 is pressed
+            self.cpu.keypad[0] = true;
+        } else if keyboard::is_key_pressed(ctx, KeyCode::Key2) {
+            //Key 2 is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::Key3) {
+            //key 3 is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::Key4) {
+            //key C is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::Q) {
+            //key 4 is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::W) {
+            //key 5 is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::E) {
+            //key 6 is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::R) {
+            //Key D is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::A) {
+            //key 7 is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::S) {
+            //key 8 is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::D) {
+            //key 9 is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::F) {
+            //key E is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::Z) {
+            //key A is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::X) {
+            //key 0 is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::C) {
+            //key B is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::V) {
+            //key F is pressed
+        } else if keyboard::is_key_pressed(ctx, KeyCode::Escape){
+            event::quit(ctx);
+        }
+        self.cpu.emulate_cycle();
         Ok(())
     }
 
