@@ -16,15 +16,16 @@ const SCREEN_SIZE: (f32, f32) = (
 
 struct EmulationState {
     cpu: CPU,
-    rom: String,
 }
 
 impl EmulationState {
     fn new() -> Self {
-        EmulationState {
+        let mut new_emulation = EmulationState {
             cpu: CPU::new(),
-            rom: String::new(),
-        }
+        };
+
+        new_emulation.load_rom("test_opcode.ch8");
+        new_emulation
     }
 
     fn load_rom(&mut self, location: &str) {
@@ -120,6 +121,4 @@ fn main() {
 
     let state = &mut EmulationState::new();
     event::run(ctx, events_loop, state).unwrap();
-
-    
 }

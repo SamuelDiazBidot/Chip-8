@@ -11,6 +11,9 @@ pub struct CPU {
     pub stack: [u16; 16],
     pub sp: usize,
     pub keypad: [bool; 16],
+    //temporary implementation
+    pub keypad_waiting: bool,
+    pub keypad_register: usize,
 }
 
 impl CPU {
@@ -50,6 +53,8 @@ impl CPU {
             stack: [0; 16],
             sp: 0,
             keypad: [false; 16],
+            keypad_waiting: false,
+            keypad_register: 0,
         }
     }
 
@@ -60,6 +65,28 @@ impl CPU {
     }
 
     pub fn emulate_cycle(&mut self) {
+        if self.keypad_waiting {
+            for i in 0..16 {
+                self.keypad_waiting = false;
+                self.v[self.keypad_register] = i as u8;
+                break;
+            }
+        } else {
+            self.update_timers();
+            self.run_opcode();
+        }
+    }
+
+    fn update_timers(&mut self) {
+        if self.delay_timer > 0 {
+            self.delay_timer -= 1;
+        }
+        if self.sound_timer > 0 {
+            self.sound_timer -= 1;
+        }
+    }
+
+    fn run_opcode(&mut self) {
         let opcode: u16 = (self.memory[self.pc] as u16) << 8 | (self.memory[self.pc + 1] as u16);
         let nibbles = (
             (opcode & 0xF000) >> 12,
@@ -254,11 +281,13 @@ impl CPU {
             },
             //LD Vx, key_press (Wait for a key press, store the value of the key in Vx)
             (0xF,_,0,0xA) => {
-                //
                 // if let Some(val) = get_key_press() {
                 //      self.v[x] = val;
                 //      self.pc += 2;
                 //
+                self.keypad_waiting = true;
+                self.keypad_register = x;
+                self.pc += 2;
             },
             //LD delay_timer, Vx (Set delay timer = Vx)
             (0xF,_,1,5) => {
