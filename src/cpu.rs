@@ -110,8 +110,8 @@ impl CPU {
             },
             //RET (Return from a subroutine)
             (0,0,0xE,0xE) => {
-                self.pc = self.stack[self.sp] as usize;
                 self.sp -= 1;
+                self.pc = self.stack[self.sp] as usize;
             },
             //JP addr (Jump to location nnn)
             (1,_,_,_) => {

@@ -1,4 +1,5 @@
 mod cpu;
+mod tests;
 
 use cpu::CPU;
 use std::fs::File;
