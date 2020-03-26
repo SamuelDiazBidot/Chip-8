@@ -119,8 +119,8 @@ impl CPU {
             },
             //CALL addr (Call to subroutine nnn)
             (2,_,_,_) => {
-                self.sp += 1;
                 self.stack[self.sp] = (self.pc + 2) as u16;
+                self.sp += 1;
                 self.pc = nnn;
             },
             //SE Vx, byte (Skip next instruction if Vx = kk)
@@ -155,10 +155,8 @@ impl CPU {
             //ADD Vx, byte (Set Vx = Vx + kk)
             (7,_,_,_) => {
                 let vx = self.v[x] as u16;
-                let kk = self.v[x] as u16;
-                self.v[x] = (vx + kk) as u8;
+                self.v[x] = (vx + (kk as u16)) as u8;
                 self.pc += 2;
-
             },
             //LD Vx, Vy (Set Vx = Vy)
             (8,_,_,0) => {
@@ -183,7 +181,7 @@ impl CPU {
             //ADD Vx, Vy (Set Vx = Vx + Vy, set VF = carry)
             (8,_,_,4) => {
                 let vx = self.v[x] as u16;
-                let vy = self.v[x] as u16;
+                let vy = self.v[y] as u16;
                 let result = vx + vy;
                 self.v[0x0F] = ((result & 0x0F00) >> 8) as u8;
                 self.v[x] = result as u8;
